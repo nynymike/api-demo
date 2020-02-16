@@ -12,16 +12,8 @@ now = int(time.time())
 registration_endpoint = "https://%s/oxauth/restv1/register" % op_host
 authorization_endpoint = "https://%s/oxauth/restv1/authorize" % op_host
 token_endpoint = "https://%s/oxauth/restv1/token" % op_host
-userinfo_endpoint = "https://%s/oxauth/restv1/userinfo" % op_host
-introspection_endpoint = "https://%s/oxauth/restv1/introspection" % op_host
 callback_uri = "https://%s/callback" % callback_host
-orgEndpoint = "https://%s/junction/organization" % gg_host
-itemEndpoint = "https://%s/junction/item" % gg_host
-
-@route('/')
-@route('/hello/<name>')
-def index(name='Stranger'):
-    return template('<b>Hello {{name}}</b>!', name=name)
+orgEndpoint = "https://%s/org" % gg_host
 
 @route('/')
 @get('/login')
@@ -43,88 +35,69 @@ def login():
 @route('/callback')
 def callback():
     code = request.query.code
-    state = request.query.state
-    if (code == None) or (state == None):
-        return '''
-        <H1>Code and state must be present!</H1>
-        <UL>
-            <LI>code: %s</LI>
-            <LI>state: %s </LI>
-        </UL>
-        ''' % (code, state)
+    if not code:
+        return "<H1>Code note found!</H1>"
 
-    return_html = '''
-        <H1>Callback Response</H1>
-        <UL>
-          <LI>code = %s</LI>
-          <LI>state = %s</LI>
-        <UL>
-    ''' % (code, state)
+    tokens = get_tokens(code)
+    access_token = None
+    if 'access_token' in tokens:
+        access_token = tokens['access_token']
+    else:
+        return "<H1>Access token not found!</H1>"
 
-#    tokens = get_tokens(code, op_state)
-#    return_html = return_html + '''
-#            <H1>Tokens</H1>
-#            <UL>
-#              <LI>access token = %s</LI>
-#              <LI>id_token = %s</LI>
-#            <UL>
-#            <H1>Next Step: Call Userinfo</H1>
-#            <UL>
-#                <A HREF="/userinfo">Click here to get UserInfo</A>
-#            </UL>
-#        ''' % (tokens['access_token'], tokens['id_token'])
-
-    return return_html
-
-@route('/userinfo')
-def get_userinfo():
-    headers = {'Content-Type': 'application/json',
-                'Authorization': 'Bearer %s' % tokens['access_token']}
-    try:
-        r = requests.get(url=userinfo_endpoint, headers=headers)
-        if r.status_code != 200:
-            print("Userinfo Error! Return Code %i" % r.status_code)
-            return '''
-                <H1>Userinfo Error! Return Code %i" % r.status_code)
-            '''
-        userinfo = r.json()
-    except:
-        print(traceback.format_exc())
-    print("Userinfo: %s" % str(userinfo))
     return '''
-        <H1>Userinfo</H1>
-        <UL>
-          <LI>UserInfo = %s</LI>
-        <UL>
-        <H1>Next Step: Call APIs</H1>
-        <UL>
-            <A HREF="/userinfo">GET Organization</A>
-        </UL>
-        <UL>
-            <A HREF="/userinfo">POST Organization</A>
-        </UL>
-        <UL>
-            <A HREF="/userinfo">GET Item</A>
-        </UL>
-        <UL>
-            <A HREF="/userinfo">POST Item</A>
-        </UL>
-    ''' % str(userinfo)
+        <H1>Test Gluu Gateway</H1>
+        <FORM action="/callAPI" method="post">
+            <input type="radio" name="testAction" value="create" checked> Create<br>
+            <input type="radio" name="testAction" value="lookup"> Lookup<br>
+            Organization Identifier <input name="org_id"><br/>
+            <input name="access_token" type="hidden" value=%s /><br/>
+            <input value="Call API" type="submit" />
+        </FORM>
+        ''' % access_token
 
-@get('/organization')
-def getOrganization():
-    return True
+@post('/callAPI')
+def callAPI():
+    r = None
+    testAction = request.forms.get('testAction')
+    params = {"org_id": request.forms.get('org_id')}
+    headers = {"Authorization": "Bearer %s" % request.forms.get('access_token')}
+    if testAction == "create":
+        try:
+            r = requests.post(url=orgEndpoint, headers=headers, data=params)
+        except:
+            print(traceback.format_exc())
+            return("Error Calling API!")
+    elif testAction == "lookup":
+        try:
+            r = requests.get(url="%s/%s" % (orgEndpoint, org_id), headers=headers)
+        except:
+            print(traceback.format_exc())
+            return("Error Calling API!")
+
+    if r.status_code != 200:
+        return '''<H1>Access Denied: status code %s</H1>
+                <p>%s</p>''' % (r.status_code, r.json())
+    return '''
+                <H1>Success Calling API</H1>
+                <p>JSON: <BR />%s</p>
+            ''' % r.json()
+
+@post('/org')
+def callAPI():
+    org_id = request.forms.get('org_id')
+    return '{"status": "success", "created": "%s"}' % org_id
+
+@get('/org/<org_id>')
+def callAPI():
+    return '{"status": "success", "org": "%s", "active": "true"}' % org_id
 
 @post('/organization')
-def createOrganization():
+def createOrganization(org_data):
     return True
 
-@get('/item')
-def getOrganization():
-    return True
-
-@post('/item')
-def createOrganization():
+@get('/organization/<org-id>')
+def createOrganization(org_data):
     return True
 
 def get_authz_request_object(returnJWT=False):
@@ -145,33 +118,32 @@ def get_authz_request_object(returnJWT=False):
     else:
         return request_object
 
-def get_tokens(code, state):
-    headers = {'Content-Type': 'application/json'}
-    claims = {
+def get_tokens(code):
+    tokens = None
+    headers = {'Content-Type': 'application/x-www-form-urlencoded'}
+    creds = requests.auth.HTTPBasicAuth(client['client_id'], client['client_secret'])
+    params = {
         "code": code,
-        "state": state,
+        "grant_type": "authorization_code",
         "client_id": client['client_id'],
-        "client_secret": client['client_secret']
+        "redirect_uri": callback_uri
     }
     try:
         r = requests.post(url=token_endpoint,
-                          json=claims,
-                          headers=headers)
+                          data=params,
+                          headers=headers,
+                          auth=creds)
         if r.status_code != 200:
             print("Token Error! Return Code %i" % r.status_code)
+            print(r.json())
             return None
         tokens = r.json()
     except:
         print(traceback.format_exc())
-    print("Tokens: %s" % str(token))
+    print("Tokens: %s\n" % str(tokens))
     return tokens
 
-def introspect_token():
-    return ""
-
 def register_client():
-    client = None
-
     claims = {
        "application_type": "web",
        "redirect_uris": [callback_uri],
