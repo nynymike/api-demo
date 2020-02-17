@@ -14,6 +14,7 @@ authorization_endpoint = "https://%s/oxauth/restv1/authorize" % op_host
 token_endpoint = "https://%s/oxauth/restv1/token" % op_host
 callback_uri = "https://%s/callback" % callback_host
 orgEndpoint = "https://%s/org" % gg_host
+kongAPI = "http://localhost:8001"
 
 @route('/')
 @get('/login')
@@ -170,5 +171,24 @@ def register_client():
     print("Client: %s" % str(client))
     return client
 
+def add_kong_consumer():
+    kongConsumerEndpoint = "%s/consumers" % kongAPI
+    headers = {'Content-Type': 'application/json'}
+    claims = {"custom_id": client['client_id'],
+              "username": client['client_name']}
+    try:
+        r = requests.post(url=kongConsumerEndpoint,
+                          json=claims,
+                          headers=headers)
+        if r.status_code != 201:
+            print("Error adding Kong Consumer %i" % r.status_code)
+            print(r.json())
+            return None
+        else:
+            print("\nAdded Kong Consumer: %s\n" % client['client_name'])
+    except:
+        print(traceback.format_exc())
+
 client = register_client()
+add_kong_consumer()
 run(host='localhost', port=8080)
