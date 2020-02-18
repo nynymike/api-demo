@@ -53,8 +53,8 @@ class Introspection(IntrospectionType):
             print "--> Role value: " + role.getValue()
             role = role.getValue()
         print "User Role: " + role
-        if role == "admin":
-            responseAsJsonObject.accumulate("scope", "admin")
+        if role == "manager":
+            responseAsJsonObject.accumulate("scope", "manager")
         if role == "user":
             responseAsJsonObject.accumulate("scope", "user")
         return True

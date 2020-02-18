@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # export REQUESTS_CA_BUNDLE=/home/mike/Github/api-demo/gs.pem
 
-from bottle import post, get, route, run, template, request
+from bottle import post, get, route, run, template, request, response
 import json, requests, time, traceback, random, os, base64, urllib, jwt
 
 client = None
@@ -62,7 +62,6 @@ def callAPI():
     r = None
     testAction = request.forms.get('testAction')
     org_id = request.forms.get('org_id')
-    print("Found org: %s" % org_id)
     params = {"org_id": org_id}
     headers = {"Authorization": "Bearer %s" % request.forms.get('access_token')}
     if testAction == "create":
@@ -81,23 +80,22 @@ def callAPI():
             print(traceback.format_exc())
             return("Error Calling API!")
 
-    if r.status_code != 200:
-        return '''<H1>Access Denied: status code %s</H1>
-                <p>%s</p>''' % (r.status_code, r.json())
-    return '''
-                <H1>Success Calling API</H1>
-                <p>JSON: <BR />%s</p>
-            ''' % r.json()
+    if r.status_code not in [200, 201]:
+        return "<H1>Access Denied: status code %s</H1>" % r.status_code
+    return r.json()
 
 @post('/org')
 def createOrganization():
     print("In createOrganization")
     org_id = request.forms.get('org_id')
-    return '{"status": "success", "created": "%s"}' % org_id
+    response.status = 201
+    response.content_type = 'application/json'
+    result = '''{"status": "success", "created": "%s"}''' % org_id
+    return json.dumps(result)
 
 @get('/org/<org_id>')
-def getOrganization():
-    print("In getOrganization" % org_id)
+def getOrganization(org_id):
+    print("In getOrganization %s" % org_id)
     return '''{"status": "success", "org": "%s", "active": "true"}''' % org_id
 
 def get_authz_request_object(returnJWT=False):
