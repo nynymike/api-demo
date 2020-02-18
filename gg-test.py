@@ -61,17 +61,22 @@ def callback():
 def callAPI():
     r = None
     testAction = request.forms.get('testAction')
-    params = {"org_id": request.forms.get('org_id')}
+    org_id = request.forms.get('org_id')
+    print("Found org: %s" % org_id)
+    params = {"org_id": org_id}
     headers = {"Authorization": "Bearer %s" % request.forms.get('access_token')}
     if testAction == "create":
         try:
+            print("\nPOST %s\nParams: %s\n" % (orgEndpoint, str(params)))
             r = requests.post(url=orgEndpoint, headers=headers, data=params)
         except:
             print(traceback.format_exc())
             return("Error Calling API!")
     elif testAction == "lookup":
         try:
-            r = requests.get(url="%s/%s" % (orgEndpoint, org_id), headers=headers)
+            lookupUrl = "%s/%s" % (orgEndpoint, org_id)
+            print("\nGET %s\n" % lookupUrl)
+            r = requests.get(url=lookupUrl, headers=headers)
         except:
             print(traceback.format_exc())
             return("Error Calling API!")
@@ -85,21 +90,15 @@ def callAPI():
             ''' % r.json()
 
 @post('/org')
-def callAPI():
+def createOrganization():
+    print("In createOrganization")
     org_id = request.forms.get('org_id')
     return '{"status": "success", "created": "%s"}' % org_id
 
 @get('/org/<org_id>')
-def callAPI():
-    return '{"status": "success", "org": "%s", "active": "true"}' % org_id
-
-@post('/organization')
-def createOrganization(org_data):
-    return True
-
-@get('/organization/<org-id>')
-def createOrganization(org_data):
-    return True
+def getOrganization():
+    print("In getOrganization" % org_id)
+    return '''{"status": "success", "org": "%s", "active": "true"}''' % org_id
 
 def get_authz_request_object(returnJWT=False):
     state = base64.b64encode(os.urandom(18)).decode()
