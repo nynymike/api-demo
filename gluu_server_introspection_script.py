@@ -39,14 +39,22 @@ class Introspection(IntrospectionType):
             print "-->user: " + user.toString()
         else:
             print "-->user: is null"
+
+        print "--> uid: " + user.getUserId()
+        user = userService.getUser(user.getUserId(), "role")
+        print "--> reloaded user"
+
         role = userService.getCustomAttribute(user, "role")
+        print "--> Fetched role."
         if role == None:
-             return None
+            print "-->role: is null"
+            return None
         else:
+            print "--> Role value: " + role.getValue()
             role = role.getValue()
-        print "User Role: " + user_role
-        if user_role == "admin":
+        print "User Role: " + role
+        if role == "admin":
             responseAsJsonObject.accumulate("scope", "admin")
-        if user_role == "user":
+        if role == "user":
             responseAsJsonObject.accumulate("scope", "user")
         return True
