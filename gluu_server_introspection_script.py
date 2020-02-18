@@ -1,8 +1,8 @@
-
 from org.gluu.model.custom.script.type.introspection import IntrospectionType
 from java.lang import String
 from org.gluu.oxauth.service import UserService
 from org.gluu.oxauth.model.common import User
+from org.gluu.service.cdi.util import CdiUtil
 
 class Introspection(IntrospectionType):
     def __init__(self, currentTimeMillis):
@@ -27,11 +27,12 @@ class Introspection(IntrospectionType):
     # responseAsJsonObject - is org.codehaus.jettison.json.JSONObject, you can use any method to manipulate json
     # context is reference of org.gluu.oxauth.service.external.context.ExternalIntrospectionContext (in https://github.com/GluuFederation/oxauth project, )
     def modifyResponse(self, responseAsJsonObject, context):
+        userService = CdiUtil.bean(UserService)
         user = context.getGrantOfIntrospectionToken().getUser()
         user_role = userService.getCustomAttribute(user, "role")
         print "User Role: " + user_role
         if user_role == "admin":
             responseAsJsonObject.accumulate("scope", "admin")
         if user_role == "user":
-            responseAsJsonObject.accumulate("scope", "user")            
+            responseAsJsonObject.accumulate("scope", "user")
         return True
