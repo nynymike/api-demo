@@ -28,8 +28,22 @@ class Introspection(IntrospectionType):
     # context is reference of org.gluu.oxauth.service.external.context.ExternalIntrospectionContext (in https://github.com/GluuFederation/oxauth project, )
     def modifyResponse(self, responseAsJsonObject, context):
         userService = CdiUtil.bean(UserService)
-        user = context.getGrantOfIntrospectionToken().getUser()
-        user_role = userService.getCustomAttribute(user, "role")
+        print "-->userService: " + userService.toString()
+        grant = context.getGrantOfIntrospectionToken()
+        if grant:
+            print "-->grant: " + grant.toString()
+        else:
+            print "-->grant: is null"
+        user = grant.getUser()
+        if user:
+            print "-->user: " + user.toString()
+        else:
+            print "-->user: is null"
+        role = userService.getCustomAttribute(user, "role")
+        if role == None:
+             return None
+        else:
+            role = role.getValue()
         print "User Role: " + user_role
         if user_role == "admin":
             responseAsJsonObject.accumulate("scope", "admin")
