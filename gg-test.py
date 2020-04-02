@@ -86,20 +86,6 @@ def callAPI():
         return "<H1>Access Denied: status code %s</H1>" % r.status_code
     return r.json()
 
-@post('/org')
-def createOrganization():
-    print("In createOrganization")
-    org_id = request.forms.get('org_id')
-    response.status = 201
-    response.content_type = 'application/json'
-    result = '''{"status": "success", "created": "%s"}''' % org_id
-    return json.dumps(result)
-
-@get('/org/<org_id>')
-def getOrganization(org_id):
-    print("In getOrganization %s" % org_id)
-    return '''{"status": "success", "org": "%s", "active": "true"}''' % org_id
-
 def get_authz_request_object(returnJWT=False):
     state = base64.b64encode(os.urandom(18)).decode()
     nonce =  base64.b64encode(os.urandom(18)).decode()

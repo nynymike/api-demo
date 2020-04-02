@@ -55,6 +55,8 @@ class Introspection(IntrospectionType):
         print "User Role: " + role
         if role.lower() == "manager":
             responseAsJsonObject.accumulate("scope", "manager")
+            print "Introspection Script: Added manager scope"
         if role.lower() == "user":
             responseAsJsonObject.accumulate("scope", "user")
+            print "Introspection Script: Added user scope"
         return True
