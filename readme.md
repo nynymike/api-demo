@@ -37,18 +37,8 @@ linux distribution or docker, adjust some of the commands accordingly.
 
 ### Server 1: Install Gluu Server 4.1
 
-```
-# echo "deb https://repo.gluu.org/ubuntu/ bionic-devel main" > /etc/apt/sources.list.d/gluu-repo.list
-# curl https://repo.gluu.org/ubuntu/gluu-apt.key | apt-key add -
-# apt update
-# apt install gluu-server
-# apt install gluu-gateway
-# /sbin/gluu-serverd start
-# /sbin/gluu-serverd login
-# cd install/community-edition-setup/
-# ./setup.py
-           ... See Gluu Server docs for more instructions ...
-```
+Follow the [instructions](https://gluu.org/docs/gluu-server/4.1/) to install.
+
 Login Gluu Server admin website
 
 * Copy/Paste the `gluu_server_introspection_script.py`
@@ -56,26 +46,21 @@ Login Gluu Server admin website
 
 ### Server 2: Install Gluu Gateway 4.1
 
-```
-# echo "deb https://repo.gluu.org/ubuntu/ bionic-devel main" > /etc/apt/sources.list.d/gluu-repo.list
-# curl https://repo.gluu.org/ubuntu/gluu-apt.key | apt-key add -
-# apt update
-# apt install gluu-gateway
-```
+Follow the [instructions](https://gluu.org/docs/gg/4.1/) to install.
 
 Make a tunnel to the Gluu Gateway Server so you can get to the admin console.
 
 ```
- $ ssh -L 1338:localhost:1338 gg.gluu.me
+ $ ssh -L 1338:localhost:1338 -L 8001:localhost:8001 gg.gluu.me
 ```
 
-Login to Gluu Gateway admin interface
+Login to Gluu Gateway admin interface `https://localhost:1338`
 
 * Configure Service
 * Configure route
 * Add OAuth plugin
 
-* Follow [instructions](.) for Gluu Gateway configuration
+* Follow [instructions](https://gluu.org/docs/gg/4.1/) for Gluu Gateway configuration
 
 ### Server 3: Install Apache2 and Bottle Web Framework
 
@@ -115,7 +100,7 @@ call the Kong admin API (this is a quick fix... or you can open the firewall
   port and make sure Kong listens on an ethernet interface)
 
 ```
-ssh -L 8001:localhost:8001 mike@gg.gluu.me
+ssh -L 8001:localhost:8001 user@gg.gluu.me
 ```
 
 * Get ssl certificates for Gluu Server and Kong; cat into one file
