@@ -1,8 +1,10 @@
 #!/usr/bin/python3
-# export REQUESTS_CA_BUNDLE=/home/mike/Github/api-demo/gs.pem
 
-from bottle import post, get, route, run, template, request, response
+from bottle import post, get, route, run, template, request, response, default_app
 import json, requests, time, traceback, random, os, base64, urllib, jwt
+
+# Change working directory so relative paths (and template lookup) work again
+os.chdir(os.path.dirname(__file__))
 
 client = None
 op_host = "gs.gluu.me"
@@ -164,6 +166,7 @@ def register_client():
             return None
         client = r.json()
     except:
+        print("Error registering client.\n")
         print(traceback.format_exc())
     print("Client: %s" % str(client))
     return client
@@ -188,4 +191,9 @@ def add_kong_consumer():
 
 client = register_client()
 add_kong_consumer()
+
+# If you are running locally
 run(host='localhost', port=8080)
+
+# If you are running via Apache WSGI
+# default_app()

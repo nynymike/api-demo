@@ -96,6 +96,13 @@ Login to Gluu Gateway admin interface
 
 ```
 
+Add a proxy to the Bottle server
+
+```
+   ProxyPass / http://0.0.0.0:8080/
+   ProxyPassReverse / http://0.0.0.0:8080/
+```
+
 * Restart Apache:
 
 ```
@@ -111,7 +118,9 @@ call the Kong admin API (this is a quick fix... or you can open the firewall
 ssh -L 8001:localhost:8001 mike@gg.gluu.me
 ```
 
-* Get ssl certificates for Gluu Server and Kong; cat into one pem file
+* Get ssl certificates for Gluu Server and Kong; cat into one file
+called certs.pem. Note: you may have to use `dos2unix` to remove the
+carriage returns (^M).
 
 * Run bottle application
 
